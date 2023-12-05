@@ -9,7 +9,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/julienschmidt/httprouter"
 	"github.com/varomnrg/money-tracker/model"
-	"github.com/varomnrg/money-tracker/service"
+	service "github.com/varomnrg/money-tracker/service/user"
 	"github.com/varomnrg/money-tracker/utils"
 )
 

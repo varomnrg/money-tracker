@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	mock_repository "github.com/varomnrg/money-tracker/mocks/repository/user"
 	"github.com/varomnrg/money-tracker/model"
-	mock_repository "github.com/varomnrg/money-tracker/repository"
-	"github.com/varomnrg/money-tracker/service"
+	service "github.com/varomnrg/money-tracker/service/user"
 	"go.uber.org/mock/gomock"
 )
 
@@ -97,7 +97,7 @@ func TestUpdateUser(t *testing.T) {
 func TestDeleteUser(t *testing.T) {
 	ctrl, userService, mockRepo := SetupUserService(t)
 	defer ctrl.Finish()
-	
+
 	mockRepo.EXPECT().GetUser("user-1").Return(model.UserResponse{ID: "user-1", Username: "user1", Email: "user1@gmail.com", Created_At: time.Now()}, nil)
 	mockRepo.EXPECT().GetUser("invalid_id").Return(model.UserResponse{}, errors.New("user cannot be found"))
 	mockRepo.EXPECT().DeleteUser("user-1").Return(nil)

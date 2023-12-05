@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/varomnrg/money-tracker/model"
-	"github.com/varomnrg/money-tracker/repository"
+	repository "github.com/varomnrg/money-tracker/repository/user"
 	"github.com/varomnrg/money-tracker/utils"
 )
 

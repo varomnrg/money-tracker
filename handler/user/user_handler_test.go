@@ -10,12 +10,12 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/stretchr/testify/assert"
-	"github.com/varomnrg/money-tracker/handler"
+	handler "github.com/varomnrg/money-tracker/handler/user"
+	mock_service "github.com/varomnrg/money-tracker/mocks/service/user"
 	"github.com/varomnrg/money-tracker/model"
-	mock_service "github.com/varomnrg/money-tracker/service"
+	service "github.com/varomnrg/money-tracker/service/user"
 	"go.uber.org/mock/gomock"
 )
-
 
 func SetupUserHandler(t *testing.T) (*gomock.Controller, *handler.UserHandler, *mock_service.MockIUserService) {
 	ctrl := gomock.NewController(t)
@@ -36,7 +36,6 @@ func TestGetUsers_Handler(t *testing.T) {
 		},
 		nil,
 	)
-
 
 	t.Run("Get Users", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/users", nil)
@@ -59,7 +58,7 @@ func TestGetUser_Handler(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockService.EXPECT().GetUser("1").Return(model.UserResponse{ID: "user-1", Username: "user1", Email: "user1@example.com", Created_At: time.Now()}, nil)
-	mockService.EXPECT().GetUser("invalid_id").Return(model.UserResponse{}, mock_service.ErrUserNotFound)
+	mockService.EXPECT().GetUser("invalid_id").Return(model.UserResponse{}, service.ErrUserNotFound)
 
 	t.Run("Get User", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/users/user-1", nil)
@@ -72,7 +71,7 @@ func TestGetUser_Handler(t *testing.T) {
 
 		var user model.UserResponse
 		json.Unmarshal(recorder.Body.Bytes(), &user)
-		
+
 		assert.Equal(t, "user1", user.Username, "Expected user1 in response")
 	})
 
@@ -96,7 +95,7 @@ func TestCreateUser_Handler(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockService.EXPECT().CreateUser(model.UserRequest{Username: "user1", Email: "user1@example.com", Password: "password"}).Return(nil)
-	mockService.EXPECT().CreateUser(model.UserRequest{Username: "existingusername", Email: "exist@example.com", Password: "password"}).Return(mock_service.ErrUsernameAlreadyExist)
+	mockService.EXPECT().CreateUser(model.UserRequest{Username: "existingusername", Email: "exist@example.com", Password: "password"}).Return(service.ErrUsernameAlreadyExist)
 
 	t.Run("Create User", func(t *testing.T) {
 		user := model.UserRequest{
@@ -143,7 +142,7 @@ func TestUpdateUser_Handler(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockService.EXPECT().UpdateUser("user-1", model.UserRequest{Username: "user1", Email: "user1@example.com", Password: "password"}).Return(nil)
-	mockService.EXPECT().UpdateUser("invalid_id", model.UserRequest{Username: "user1", Email: "user1@example.com", Password: "password"}).Return(mock_service.ErrUserNotFound)
+	mockService.EXPECT().UpdateUser("invalid_id", model.UserRequest{Username: "user1", Email: "user1@example.com", Password: "password"}).Return(service.ErrUserNotFound)
 
 	t.Run("Update User", func(t *testing.T) {
 		user := model.UserRequest{
@@ -188,9 +187,9 @@ func TestDeleteUser_Handler(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockService.EXPECT().DeleteUser("user-1").Return(nil)
-	mockService.EXPECT().DeleteUser("invalid_id").Return(mock_service.ErrUserNotFound)
+	mockService.EXPECT().DeleteUser("invalid_id").Return(service.ErrUserNotFound)
 
-	t.Run("Delete User", func(t *testing.T){
+	t.Run("Delete User", func(t *testing.T) {
 
 		req, _ := http.NewRequest("DELETE", "/users/user-1", nil)
 

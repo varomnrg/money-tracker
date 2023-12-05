@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	"github.com/varomnrg/money-tracker/handler"
-	"github.com/varomnrg/money-tracker/repository"
-	"github.com/varomnrg/money-tracker/service"
+	uh "github.com/varomnrg/money-tracker/handler/user"
+	ur "github.com/varomnrg/money-tracker/repository/user"
+	us "github.com/varomnrg/money-tracker/service/user"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -24,9 +24,10 @@ func main() {
 
 	DB_URL := os.Getenv("PSQL_DB_URL")
 
-	usersPostgresRepo := repository.NewPostgresqlUserRepository(DB_URL)
-	userService := service.NewUserService(usersPostgresRepo)
-	userHandler := handler.NewUserHandler(userService)
+	// User Service
+	usersPostgresRepo := ur.NewPostgresqlUserRepository(DB_URL)
+	userService := us.NewUserService(usersPostgresRepo)
+	userHandler := uh.NewUserHandler(userService)
 
 	router.GET("/users", loggerHandler(userHandler.GetUsers))
 	router.GET("/users/:id", loggerHandler(userHandler.GetUser))
