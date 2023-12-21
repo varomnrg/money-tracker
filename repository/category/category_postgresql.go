@@ -95,10 +95,10 @@ func (p *postgresqlCategoryRepository) GetCategory(id string) (model.Category, e
 	return category, nil
 }
 
-func (p *postgresqlCategoryRepository) CreateCategory(userID string, category model.CategoryRequest) error{
+func (p *postgresqlCategoryRepository) CreateCategory(category model.Category) error{
 	_, err := p.connectionPool.Exec(
-		"INSERT INTO categories (name, user_id) VALUES ($1, $2)",
-		category.Name, userID,
+		"INSERT INTO categories (id, name, user_id) VALUES ($1, $2, $3)",
+		category.ID, category.Name, category.User_ID,
 	)
 
 	if err != nil {

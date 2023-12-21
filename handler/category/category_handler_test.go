@@ -1,7 +1,9 @@
 package handler_test
 
 import (
+	"bytes"
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -59,8 +61,8 @@ func TestGetUserCategories_Handler(t *testing.T) {
 	// Mock GetUserCategories
 	mockService.EXPECT().GetUserCategories("user-1").Return(
 		[]model.Category{
-			{ID: "category-1", Name: "category1"},
-			{ID: "category-2", Name: "category2"},
+			{ID: "category-1", Name: "category1", User_ID: "user-1"},
+			{ID: "category-2", Name: "category2", User_ID: "user-1"},
 		},
 		nil,
 	)
@@ -68,14 +70,15 @@ func TestGetUserCategories_Handler(t *testing.T) {
 	// Mock GetUserCategories with invalid id
 	mockService.EXPECT().GetUserCategories("invalid_id").Return([]model.Category{}, service.ErrUserNotFound)
 	
-
 	t.Run("Get User Categories", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/categories/user-1", nil)
 
 		recorder := httptest.NewRecorder()
 
-		categoryHandler.GetUserCategories(recorder, req, nil)
+		categoryHandler.GetUserCategories(recorder, req, []httprouter.Param{{Key: "userID", Value: "user-1"}})
 		assert.Equal(t, http.StatusOK, recorder.Code, "Expected status OK")
+
+		log.Println(recorder.Body.String())
 
 		var categories []model.Category
 		json.Unmarshal(recorder.Body.Bytes(), &categories)
@@ -88,7 +91,7 @@ func TestGetUserCategories_Handler(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/categories/invalid_id", nil)
 		recorder := httptest.NewRecorder()
 
-		categoryHandler.GetUserCategories(recorder, req, nil)
+		categoryHandler.GetUserCategories(recorder, req, []httprouter.Param{{Key: "userID", Value: "invalid_id"}})
 
 		assert.Equal(t, http.StatusNotFound, recorder.Code, "Expected status Not Found")
 	})
@@ -134,14 +137,49 @@ func TestCreateCategory_Handler(t *testing.T) {
 	// Mock CreateCategory
 	mockService.EXPECT().CreateCategory("user-1", model.CategoryRequest{Name: "category1"}).Return(nil)
 
+	// Mock CreateCategory with invalid user id
+	mockService.EXPECT().CreateCategory("invalid_id", model.CategoryRequest{Name: "category1"}).Return(service.ErrUserNotFound)
+
+	// Mock CreateCategory with existing category
+	mockService.EXPECT().CreateCategory("user-1", model.CategoryRequest{Name: "category1"}).Return(service.ErrCategoryAlreadyExist)
+
 	t.Run("Create Category", func(t *testing.T) {
-		req, _ := http.NewRequest("POST", "/categories", nil)
+		category := model.CategoryRequest{Name: "category1"}
+
+		body, _ := json.Marshal(category)
+		req, _ := http.NewRequest("POST", "/categories/user-1", bytes.NewReader(body))
 
 		recorder := httptest.NewRecorder()
 
-		categoryHandler.CreateCategory(recorder, req, []httprouter.Param{{Key: "user_id", Value: "user-1"}})
+		categoryHandler.CreateCategory(recorder, req, []httprouter.Param{{Key: "userID", Value: "user-1"}})
 
 		assert.Equal(t, http.StatusCreated, recorder.Code, "Expected status Created")
+	})
+
+	t.Run("Create Category with invalid user id", func(t *testing.T) {
+		category := model.CategoryRequest{Name: "category1"}
+
+		body, _ := json.Marshal(category)
+		req, _ := http.NewRequest("POST", "/categories/invalid_id", bytes.NewReader(body))
+
+		recorder := httptest.NewRecorder()
+
+		categoryHandler.CreateCategory(recorder, req, []httprouter.Param{{Key: "userID", Value: "invalid_id"}})
+
+		assert.Equal(t, http.StatusNotFound, recorder.Code, "Expected status Not Found")
+	})
+
+	t.Run("Create Category with existing category", func(t *testing.T) {
+		category := model.CategoryRequest{Name: "category1"}
+
+		body, _ := json.Marshal(category)
+		req, _ := http.NewRequest("POST", "/categories/user-1", bytes.NewReader(body))
+
+		recorder := httptest.NewRecorder()
+
+		categoryHandler.CreateCategory(recorder, req, []httprouter.Param{{Key: "userID", Value: "user-1"}})
+
+		assert.Equal(t, http.StatusBadRequest, recorder.Code, "Expected status Conflict")
 	})
 }
 

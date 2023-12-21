@@ -39,17 +39,17 @@ func (m *MockICategoryRepository) EXPECT() *MockICategoryRepositoryMockRecorder 
 }
 
 // CreateCategory mocks base method.
-func (m *MockICategoryRepository) CreateCategory(userID string, category model.CategoryRequest) error {
+func (m *MockICategoryRepository) CreateCategory(category model.Category) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateCategory", userID, category)
+	ret := m.ctrl.Call(m, "CreateCategory", category)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateCategory indicates an expected call of CreateCategory.
-func (mr *MockICategoryRepositoryMockRecorder) CreateCategory(userID, category any) *gomock.Call {
+func (mr *MockICategoryRepositoryMockRecorder) CreateCategory(category any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCategory", reflect.TypeOf((*MockICategoryRepository)(nil).CreateCategory), userID, category)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCategory", reflect.TypeOf((*MockICategoryRepository)(nil).CreateCategory), category)
 }
 
 // DeleteCategory mocks base method.

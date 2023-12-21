@@ -38,8 +38,8 @@ func TestGetCategories(t *testing.T) {
 		categories, err := categoryService.GetCategories()
 
 		assert.NoError(t,err)
-		assert.Len(t, categories, 2)		
-		assert.Equal(t, "category1", categories[0].Name)
+		assert.Len(t, categories, 2, "Expected returned 2 categories")		
+		assert.Equal(t, "category1", categories[0].Name, "Expected first category name is category1")
 	})
 }
 
@@ -50,8 +50,8 @@ func TestGetUserCategories(t *testing.T) {
 	// Mock for GetUserCategories
 	mockUserRepo.EXPECT().GetUser("user-1").Return(model.UserResponse{ID: "user-1", Username: "user1", Email: "user1@gmail.com", Created_At: time.Now()}, nil)
 	mockCatRepo.EXPECT().GetUserCategories("user-1").Return([]model.Category{
-		{ID: "cat-1", Name: "category1"},
-		{ID: "cat-2", Name: "category2"},
+		{ID: "cat-1", Name: "category1", User_ID: "user-1"},
+		{ID: "cat-2", Name: "category2", User_ID: "user-1"},
 		}, 
 		nil,
 	)
@@ -61,27 +61,25 @@ func TestGetUserCategories(t *testing.T) {
 	mockCatRepo.EXPECT().GetUserCategories("user-2").Return([]model.Category{}, nil)
 
 	// Mock for GetUserCategories with invalid user id
-	mockUserRepo.EXPECT().GetUser("invalid_id").Return(model.UserResponse{}, nil)
+	mockUserRepo.EXPECT().GetUser("invalid_id").Return(model.UserResponse{}, service.ErrUserNotFound)
 
 	t.Run("Get User Categories", func(t *testing.T){
 		categories, err := categoryService.GetUserCategories("user-1")
 
 		assert.NoError(t,err)
-		assert.Len(t, categories, 2)		
-		assert.Equal(t, "category1", categories[0].Name)
+		assert.Len(t, categories, 2, "Expected returned 2 categories")		
+		assert.Equal(t, "category1", categories[0].Name, "Expected first category name is category1")
 	})
 
 	t.Run("Get User Categories without categories", func(t *testing.T){
 		categories, err := categoryService.GetUserCategories("user-2")
-
 		assert.NoError(t,err)
-		assert.Len(t, categories, 0)		
+		assert.Len(t, categories, 0, "Expected returned 0 categories")		
 	})
 
 	t.Run("Get User Categories with invalid user id", func(t *testing.T){
 		_, err := categoryService.GetUserCategories("invalid_id")
-
-		assert.ErrorIs(t, err, service.ErrUserNotFound)
+		assert.ErrorIs(t, err, service.ErrUserNotFound, "Expected user not found")
 	})
 }
 
@@ -93,7 +91,7 @@ func TestGetCategory(t *testing.T) {
 	mockCatRepo.EXPECT().GetCategory("cat-1").Return(model.Category{ID: "cat-1", Name: "category1", User_ID: "user-1"}, nil)
 	
 	// Mock for GetCategory with invalid id
-	mockCatRepo.EXPECT().GetCategory("invalid_id").Return(model.Category{}, nil)
+	mockCatRepo.EXPECT().GetCategory("invalid_id").Return(model.Category{}, service.ErrCategoryNotFound)
 
 	t.Run("Get Category", func(t *testing.T){
 		category, err := categoryService.GetCategory("cat-1")
@@ -116,14 +114,14 @@ func TestCreateCategory(t *testing.T) {
 	// Mock for Create Category
 	mockUserRepo.EXPECT().GetUser("user-1").Return(model.UserResponse{ID: "user-1", Username: "user1", Email: "user1@gmail.com", Created_At: time.Now()}, nil)
 	mockCatRepo.EXPECT().IsUserCategoryExist("user-1", "category1").Return(false)
-	mockCatRepo.EXPECT().CreateCategory("user-1", gomock.Any()).Return(nil)
+	mockCatRepo.EXPECT().CreateCategory(gomock.Any()).Return(nil)
 
 	// Mock for Create Category with existing category name
 	mockUserRepo.EXPECT().GetUser("user-2").Return(model.UserResponse{ID: "user-2", Username: "user2", Email: "user2@gmail.com", Created_At: time.Now()}, nil)
 	mockCatRepo.EXPECT().IsUserCategoryExist("user-2", "category1").Return(true)
 
 	// Mock for Create Category with invalid user id
-	mockUserRepo.EXPECT().GetUser("invalid_id").Return(model.UserResponse{}, nil)
+	mockUserRepo.EXPECT().GetUser("invalid_id").Return(model.UserResponse{}, service.ErrUserNotFound)
 
 	t.Run("Create Category", func(t *testing.T){
 		err := categoryService.CreateCategory("user-1", model.CategoryRequest{Name: "category1"})
@@ -149,10 +147,11 @@ func TestDeleteCategory(t *testing.T){
 	defer ctrl.Finish()
 
 	// Mock for Delete Category
+	mockCatRepo.EXPECT().GetCategory("cat-1").Return(model.Category{ID: "cat-1", Name: "category1", User_ID: "user-1"}, nil)
 	mockCatRepo.EXPECT().DeleteCategory("cat-1").Return(nil)
 
 	// Mock for Delete Category with invalid id
-	mockCatRepo.EXPECT().DeleteCategory("invalid_catid").Return(nil)
+	mockCatRepo.EXPECT().GetCategory("invalid_catid").Return(model.Category{}, service.ErrCategoryNotFound)
 
 	t.Run("Delete Category", func(t *testing.T){
 		err := categoryService.DeleteCategory("cat-1")
